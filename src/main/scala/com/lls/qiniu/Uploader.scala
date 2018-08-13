@@ -235,13 +235,16 @@ object Uploader extends App {
           val bucket = dBucket orElse properties.bucket getOrElse exit("no bucket")
           val names = sets.values.getOrElse(name, exit(s"empty set: $name"))
 
-          val cfg = new Configuration(Zone.zone0)
-          val auth = Auth.create(accessKey, secretKey)
-          val bucketManager = new BucketManager(auth, cfg)
-          val batchOperations = new BucketManager.BatchOperations
-          batchOperations.addDeleteOp(bucket, names.map { s ⇒ s.substring(s.lastIndexOf('/') + 1) }: _*)
-          val response = bucketManager.batch(batchOperations)
-          val batchStatusList = response.jsonToObject(classOf[Array[BatchStatus]])
+          val batchStatusList = names.grouped(500).flatMap { n ⇒
+            val cfg = new Configuration(Zone.zone0)
+            val auth = Auth.create(accessKey, secretKey)
+            val bucketManager = new BucketManager(auth, cfg)
+            val batchOperations = new BucketManager.BatchOperations
+            batchOperations.addDeleteOp(bucket, n.map { s ⇒ s.substring(s.lastIndexOf('/') + 1) }: _*)
+            val response = bucketManager.batch(batchOperations)
+            response.jsonToObject(classOf[Array[BatchStatus]])
+          }.toList
+
           if (batchStatusList.zip(names).map { case (status, n) ⇒
             if (status.code != 200) {
               println(s"failed to delete $n: ${status.data.error}")
