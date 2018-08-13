@@ -8,6 +8,7 @@ libraryDependencies ++= Seq(
   "org.rogach" %% "scallop" % "3.1.2",
   "io.argonaut" %% "argonaut" % "6.2.1",
   "com.qiniu" % "qiniu-java-sdk" % "7.2.+",
+  "com.lihaoyi" %% "upickle" % "0.6.6",
 )
 
 
